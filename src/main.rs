@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use bloomfilter::Bloom;
 
 fn random_key(key_length: usize) -> String {
     use rand::Rng;
@@ -30,4 +31,26 @@ fn main() {
     });
 
     println!("{:?}", plain);
+
+    let bitmap_size = 1024;
+    let mut bloom : Bloom<String> = Bloom::new(bitmap_size, num_entries);
+    for (key, value) in &plain {
+        if *value {
+            bloom.set(key);
+        }
+    }
+
+    println!("{:?}", bloom);
+
+    let correctness = plain
+        .iter()
+        .map(|(key, value)| {
+            value == &bloom.check(key)
+        })
+        .fold(HashMap::new(), |mut acc, correct| {
+            *acc.entry(correct).or_insert(0) += 1;
+            acc
+        });
+
+    println!("{:?}", correctness);
 }
