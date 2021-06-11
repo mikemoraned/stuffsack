@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use bloomfilter::Bloom;
+use deepsize::{DeepSizeOf, Context};
 
 fn random_key(key_length: usize) -> String {
     use rand::Rng;
@@ -21,6 +22,22 @@ fn random_value() -> bool {
     rng.gen_bool(0.5)
 }
 
+#[derive(DeepSizeOf)]
+struct SizedPlain {
+    plain: HashMap<String, bool>
+}
+
+struct SizedBloom {
+    bloom: Bloom<String>
+}
+
+impl DeepSizeOf for SizedBloom {
+    fn deep_size_of_children(&self, context: &mut Context) -> usize
+    {
+        self.bloom.bitmap().deep_size_of_children(context)
+    }
+}
+
 fn main() {
     let key_length: usize = 30;
     let num_entries = 1000;
@@ -32,7 +49,7 @@ fn main() {
 
     println!("{:?}", plain);
 
-    let bitmap_size = 1024;
+    let bitmap_size = 1024 / 10;
     let mut bloom : Bloom<String> = Bloom::new(bitmap_size, num_entries);
     for (key, value) in &plain {
         if *value {
@@ -53,4 +70,8 @@ fn main() {
         });
 
     println!("{:?}", correctness);
+
+    println!("plain size: {}, bloom size: {}",
+             (SizedPlain { plain }).deep_size_of(),
+             (SizedBloom { bloom }).deep_size_of());
 }
