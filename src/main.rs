@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use deepsize::{Context, DeepSizeOf};
+use deepsize::DeepSizeOf;
 
 mod compressed_map;
 mod random;

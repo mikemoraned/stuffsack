@@ -41,9 +41,13 @@ pub fn compress(original: &HashMap<String, bool>) -> CompressedMap {
         }
     }
 
+    let possibly_incorrect = CompressedMap {
+        bloom: bloom.clone(), direct: HashMap::new()
+    };
+
     let mut direct: HashMap<String, bool> = HashMap::new();
     for (key, value) in original {
-        if *value != bloom.check(key) {
+        if value != possibly_incorrect.get(key).unwrap() {
             direct.insert(key.clone(), value.clone());
         }
     }
