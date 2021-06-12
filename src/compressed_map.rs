@@ -62,17 +62,15 @@ mod tests {
     use std::collections::HashMap;
 
     use crate::compressed_map::compress;
-    use crate::random::{random_key, random_value};
+    use crate::random::random_key_value_pairs;
 
     #[test]
     fn same_output() {
         let key_length: usize = 30;
         let num_entries = 1000;
 
-        let mut original: HashMap<String, bool> = HashMap::new();
-        (0..num_entries).for_each(|_| {
-            original.insert(random_key(key_length),random_value());
-        });
+        let original: HashMap<String, bool>
+            = random_key_value_pairs(key_length, num_entries).iter().cloned().collect();
 
         let bloom_map = compress(&original);
 

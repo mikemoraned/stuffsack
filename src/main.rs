@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use deepsize::DeepSizeOf;
+use crate::random::random_key_value_pairs;
 
 mod compressed_map;
 mod random;
@@ -9,10 +10,8 @@ fn main() {
     let key_length: usize = 30;
     let num_entries = 1000;
 
-    let mut plain: HashMap<String, bool> = HashMap::new();
-    (0..num_entries).for_each(|_| {
-        plain.insert(random::random_key(key_length), random::random_value());
-    });
+    let plain: HashMap<String, bool>
+        = random_key_value_pairs(key_length, num_entries).into_iter().collect();
 
     println!("{:?}", plain);
 
