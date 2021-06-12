@@ -57,8 +57,8 @@ pub fn compress(original: &HashMap<String, bool>) -> CompressedMap {
 mod tests {
     use std::collections::HashMap;
 
-    use crate::{random_key, random_value};
     use crate::compressed_map::compress;
+    use crate::random::{random_key, random_value};
 
     #[test]
     fn same_output() {
