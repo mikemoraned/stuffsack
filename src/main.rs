@@ -22,11 +22,6 @@ fn random_value() -> bool {
     rng.gen_bool(0.5)
 }
 
-#[derive(DeepSizeOf)]
-struct SizedPlain {
-    plain: HashMap<String, bool>
-}
-
 struct SizedBloom {
     bloom: Bloom<String>
 }
@@ -72,6 +67,6 @@ fn main() {
     println!("{:?}", correctness);
 
     println!("plain size: {}, bloom size: {}",
-             (SizedPlain { plain }).deep_size_of(),
+             plain.deep_size_of(),
              (SizedBloom { bloom }).deep_size_of());
 }
