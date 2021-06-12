@@ -70,7 +70,7 @@ mod tests {
         let num_entries = 1000;
 
         let original: HashMap<String, bool>
-            = random_key_value_pairs(key_length, num_entries).iter().cloned().collect();
+            = random_key_value_pairs(key_length, num_entries, 1).iter().cloned().collect();
 
         let bloom_map = compress(&original);
 

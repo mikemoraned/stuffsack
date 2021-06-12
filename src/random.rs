@@ -2,8 +2,8 @@ use rand::Rng;
 use rand_pcg::Pcg64;
 use rand::prelude::*;
 
-pub fn random_key_value_pairs(key_length: usize, size: usize) -> Vec<(String, bool)> {
-    let mut rng = Pcg64::seed_from_u64(2);
+pub fn random_key_value_pairs(key_length: usize, size: usize, seed: u64) -> Vec<(String, bool)> {
+    let mut rng = Pcg64::seed_from_u64(seed);
     (0..size).map(|_| {
         (random_key(key_length, &mut rng), random_value(&mut rng))
     }).collect()
