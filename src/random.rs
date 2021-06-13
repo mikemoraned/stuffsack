@@ -9,7 +9,7 @@ pub fn random_key_value_pairs<V: Clone>(key_length: usize, size: usize, seed: u6
     }).collect()
 }
 
-fn random_key(key_length: usize, rng: &mut rand_pcg::Pcg64) -> String {
+pub fn random_key(key_length: usize, rng: &mut rand_pcg::Pcg64) -> String {
     const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
     (0..key_length)
