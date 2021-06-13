@@ -78,8 +78,9 @@ mod tests {
     fn example_map() -> HashMap<String, bool> {
         let key_length: usize = 30;
         let num_entries = 1000;
+        let values = [true, false];
 
-        random_key_value_pairs(key_length, num_entries, 1).iter().cloned().collect()
+        random_key_value_pairs(key_length, num_entries, 1, &values).iter().cloned().collect()
     }
 
     #[test]

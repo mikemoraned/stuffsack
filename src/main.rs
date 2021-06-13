@@ -9,9 +9,10 @@ mod random;
 fn main() {
     let key_length: usize = 30;
     let num_entries = 1000;
+    let values = [true, false];
 
     let plain: HashMap<String, bool>
-        = random_key_value_pairs(key_length, num_entries, 1).into_iter().collect();
+        = random_key_value_pairs(key_length, num_entries, 1, &values).into_iter().collect();
 
     println!("{:?}", plain);
 
