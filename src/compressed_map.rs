@@ -64,18 +64,34 @@ mod tests {
     use crate::compressed_map::compress;
     use crate::random::random_key_value_pairs;
 
-    #[test]
-    fn same_output() {
+    fn example_map() -> HashMap<String, bool> {
         let key_length: usize = 30;
         let num_entries = 1000;
 
-        let original: HashMap<String, bool>
-            = random_key_value_pairs(key_length, num_entries, 1).iter().cloned().collect();
+        random_key_value_pairs(key_length, num_entries, 1).iter().cloned().collect()
+    }
 
-        let bloom_map = compress(&original);
+    #[test]
+    fn same_output() {
+        let original = example_map();
+        let compressed = compress(&original);
 
         for key in original.keys() {
-            assert_eq!(bloom_map.get(key), original.get(key));
+            assert_eq!(compressed.get(key), original.get(key));
         }
+    }
+
+    #[test]
+    fn smaller_size() {
+        use deepsize::DeepSizeOf;
+
+        let original = example_map();
+        let compressed = compress(&original);
+
+        let original_size = original.deep_size_of();
+        let compressed_size = compressed.deep_size_of();
+
+        assert_ne!(original_size, compressed_size);
+        assert!(compressed_size < original_size);
     }
 }
