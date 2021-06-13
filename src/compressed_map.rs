@@ -2,50 +2,61 @@ use std::collections::HashMap;
 
 use bloomfilter::Bloom;
 use deepsize::{Context, DeepSizeOf};
+use std::hash::Hash;
 
-pub struct CompressedMap {
-    bloom: Bloom<String>,
-    direct: HashMap<String, bool>
+pub struct CompressedMap<V: Sized> {
+    bloom_filters: HashMap<V, Bloom<String>>,
+    direct: HashMap<String, V>
 }
 
-impl CompressedMap {
-    fn get(&self, k: &String) -> Option<&bool> {
+impl<V: Sized> CompressedMap<V> {
+    fn get(&self, k: &String) -> Option<&V> {
         if self.direct.contains_key(k) {
             self.direct.get(k)
         }
         else {
-            if self.bloom.check(k) {
-                Some(&true)
+            for (value, bloom) in &self.bloom_filters {
+                if bloom.check(k) {
+                    return Some(&value)
+                }
             }
-            else {
-                Some(&false)
-            }
+            None
         }
     }
 }
 
-impl DeepSizeOf for CompressedMap {
+impl<V: DeepSizeOf + Sized> DeepSizeOf for CompressedMap<V> {
     fn deep_size_of_children(&self, context: &mut Context) -> usize
     {
-        self.bloom.bitmap().deep_size_of_children(context)
-            + self.direct.deep_size_of_children(context)
+        self.bloom_filters.keys().map(|k| {
+            k.deep_size_of_children(context)
+        }).sum::<usize>()
+        + self.bloom_filters.values().map(|b| {
+                b.bitmap().deep_size_of_children(context)
+            }).sum::<usize>()
+        + self.direct.deep_size_of_children(context)
     }
 }
 
-pub fn compress(original: &HashMap<String, bool>) -> CompressedMap {
+pub fn compress<V: Sized + Eq + Hash + Clone>(original: &HashMap<String, V>) -> CompressedMap<V> {
     let bitmap_size = 1024 / 10;
-    let mut bloom : Bloom<String> = Bloom::new(bitmap_size, original.len());
+    let mut bloom_filters : HashMap<V, Bloom<String>> = HashMap::new();
     for (key, value) in original {
-        if *value {
+        if bloom_filters.contains_key(value) {
+            bloom_filters.get_mut(value).unwrap().set(key);
+        }
+        else {
+            let mut bloom = Bloom::new(bitmap_size, original.len());
             bloom.set(key);
+            bloom_filters.insert(value.clone(), bloom);
         }
     }
 
     let possibly_incorrect = CompressedMap {
-        bloom: bloom.clone(), direct: HashMap::new()
+        bloom_filters: bloom_filters.clone(), direct: HashMap::new()
     };
 
-    let mut direct: HashMap<String, bool> = HashMap::new();
+    let mut direct: HashMap<String, V> = HashMap::new();
     for (key, value) in original {
         if value != possibly_incorrect.get(key).unwrap() {
             direct.insert(key.clone(), value.clone());
@@ -53,7 +64,7 @@ pub fn compress(original: &HashMap<String, bool>) -> CompressedMap {
     }
 
     CompressedMap {
-        bloom, direct
+        bloom_filters, direct
     }
 }
 
