@@ -72,10 +72,17 @@ pub fn compress<V: Sized + Eq + Hash + Clone>(original: &HashMap<String, V>) -> 
 mod tests {
     use std::collections::HashMap;
 
-    use crate::compressed_map::compress;
+    use crate::compressed_map::{compress, CompressedMap};
     use crate::random::random_key_value_pairs;
+    use std::fmt::Debug;
+    use deepsize::DeepSizeOf;
 
-    fn example_map() -> HashMap<String, bool> {
+    #[derive(Clone, PartialEq, Eq, Hash, Debug, DeepSizeOf)]
+    enum Value {
+        A, B, C, D
+    }
+
+    fn example_bool_map() -> HashMap<String, bool> {
         let key_length: usize = 30;
         let num_entries = 1000;
         let values = [true, false];
@@ -83,23 +90,53 @@ mod tests {
         random_key_value_pairs(key_length, num_entries, 1, &values).iter().cloned().collect()
     }
 
+    fn example_enum_map() -> HashMap<String, Value> {
+        let key_length: usize = 30;
+        let num_entries = 1000;
+        let values = [Value::A, Value::B, Value::C, Value::D];
+
+        random_key_value_pairs(key_length, num_entries, 1, &values).iter().cloned().collect()
+    }
+
     #[test]
-    fn same_output() {
-        let original = example_map();
+    fn bool_map_same_output() {
+        let original = example_bool_map();
         let compressed = compress(&original);
 
+        assert_all_values_eq(original, compressed)
+    }
+
+    #[test]
+    fn enum_map_same_output() {
+        let original = example_enum_map();
+        let compressed = compress(&original);
+
+        assert_all_values_eq(original, compressed)
+    }
+
+    fn assert_all_values_eq<V:PartialEq + Debug>(original: HashMap<String, V>, compressed: CompressedMap<V>) {
         for key in original.keys() {
             assert_eq!(compressed.get(key), original.get(key));
         }
     }
 
     #[test]
-    fn smaller_size() {
-        use deepsize::DeepSizeOf;
-
-        let original = example_map();
+    fn bool_map_smaller_size() {
+        let original = example_bool_map();
         let compressed = compress(&original);
 
+        assert_smaller_size(original, compressed);
+    }
+
+    #[test]
+    fn enum_map_smaller_size() {
+        let original = example_enum_map();
+        let compressed = compress(&original);
+
+        assert_smaller_size(original, compressed);
+    }
+
+    fn assert_smaller_size<V:PartialEq + Debug + DeepSizeOf>(original: HashMap<String, V>, compressed: CompressedMap<V>) {
         let original_size = original.deep_size_of();
         let compressed_size = compressed.deep_size_of();
 
