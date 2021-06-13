@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 
 use deepsize::DeepSizeOf;
-use crate::random::random_key_value_pairs;
-
-mod compressed_map;
-mod random;
+use stuffsack::random::random_key_value_pairs;
+use stuffsack::compressed_map;
 
 fn main() {
     let key_length: usize = 30;

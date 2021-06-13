@@ -10,7 +10,21 @@ pub struct CompressedMap<V: Sized> {
 }
 
 impl<V: Sized> CompressedMap<V> {
-    fn get(&self, k: &String) -> Option<&V> {
+    pub fn contains_key(&self, k: &String) -> bool {
+        if self.direct.contains_key(k) {
+            return true;
+        }
+        else {
+            for (_, bloom) in &self.bloom_filters {
+                if bloom.check(k) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    pub fn get(&self, k: &String) -> Option<&V> {
         if self.direct.contains_key(k) {
             self.direct.get(k)
         }
@@ -39,7 +53,7 @@ impl<V: DeepSizeOf + Sized> DeepSizeOf for CompressedMap<V> {
 }
 
 pub fn compress<V: Sized + Eq + Hash + Clone>(original: &HashMap<String, V>) -> CompressedMap<V> {
-    let bitmap_size = 1024 / 10;
+    let bitmap_size = 1024 * 10;
     let mut bloom_filters : HashMap<V, Bloom<String>> = HashMap::new();
     for (key, value) in original {
         if bloom_filters.contains_key(value) {
