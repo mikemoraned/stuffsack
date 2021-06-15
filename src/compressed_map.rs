@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use bloomfilter::Bloom;
 use deepsize::{Context, DeepSizeOf};
@@ -11,15 +11,17 @@ pub struct CompressedMap<V: Sized> {
 
 impl<V: Sized> CompressedMap<V> {
     pub fn contains_key(&self, k: &String) -> bool {
-        if self.direct.contains_key(k) {
-            true
-        }
-        else {
-            self.bloom_filters
-                .values()
-                .into_iter()
-                .any(|b| b.check(k))
-        }
+        // if self.direct.contains_key(k) {
+        //     true
+        // }
+        // else {
+        //     // self.bloom_filters
+        //     //     .values()
+        //     //     .into_iter()
+        //     //     .any(|b| b.check(k))
+        //     return self.get(k)
+        // }
+        self.get(k).is_some()
     }
 
     pub fn get(&self, k: &String) -> Option<&V> {
@@ -27,12 +29,18 @@ impl<V: Sized> CompressedMap<V> {
             self.direct.get(k)
         }
         else {
-            for (value, bloom) in &self.bloom_filters {
-                if bloom.check(k) {
-                    return Some(&value)
+            let mut missing_from_bloom : Vec<&V> = Vec::new();
+            for (bloom_value, bloom) in &self.bloom_filters {
+                if !bloom.check(k) {
+                    missing_from_bloom.push(bloom_value);
                 }
             }
-            None
+            if missing_from_bloom.len() == 1 {
+                Some(missing_from_bloom.get(0).unwrap())
+            }
+            else {
+                None
+            }
         }
     }
 }
@@ -52,15 +60,15 @@ impl<V: DeepSizeOf + Sized> DeepSizeOf for CompressedMap<V> {
 
 pub fn compress<V: Sized + Eq + Hash + Clone>(original: &HashMap<String, V>) -> CompressedMap<V> {
     let bitmap_size = 1024 * 10;
-    let mut bloom_filters : HashMap<V, Bloom<String>> = HashMap::new();
+    let distinct_values = original.values().into_iter().cloned().collect::<HashSet<V>>();
+    let mut bloom_filters : HashMap<V, Bloom<String>> = distinct_values.into_iter().map(|v| {
+        (v, Bloom::new(bitmap_size, original.len()))
+    }).collect();
     for (key, value) in original {
-        if let Some(bloom_value) = bloom_filters.get_mut(value) {
-            bloom_value.set(key);
-        }
-        else {
-            let mut bloom = Bloom::new(bitmap_size, original.len());
-            bloom.set(key);
-            bloom_filters.insert(value.clone(), bloom);
+        for (bloom_value, bloom) in &mut bloom_filters {
+            if bloom_value != value {
+                bloom.set(key);
+            }
         }
     }
 
