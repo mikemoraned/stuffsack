@@ -12,15 +12,13 @@ pub struct CompressedMap<V: Sized> {
 impl<V: Sized> CompressedMap<V> {
     pub fn contains_key(&self, k: &String) -> bool {
         if self.direct.contains_key(k) {
-            return true;
+            true
         }
         else {
-            for (_, bloom) in &self.bloom_filters {
-                if bloom.check(k) {
-                    return true;
-                }
-            }
-            return false;
+            self.bloom_filters
+                .values()
+                .into_iter()
+                .any(|b| b.check(k))
         }
     }
 
@@ -56,8 +54,8 @@ pub fn compress<V: Sized + Eq + Hash + Clone>(original: &HashMap<String, V>) -> 
     let bitmap_size = 1024 * 10;
     let mut bloom_filters : HashMap<V, Bloom<String>> = HashMap::new();
     for (key, value) in original {
-        if bloom_filters.contains_key(value) {
-            bloom_filters.get_mut(value).unwrap().set(key);
+        if let Some(bloom_value) = bloom_filters.get_mut(value) {
+            bloom_value.set(key);
         }
         else {
             let mut bloom = Bloom::new(bitmap_size, original.len());

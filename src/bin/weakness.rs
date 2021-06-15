@@ -19,11 +19,9 @@ fn main() {
     let mut rng = Pcg64::seed_from_u64(2);
     for attempt in 0..num_dummy_keys {
         let dummy_key = random_key(key_length, &mut rng);
-        if compressed_map.contains_key(&dummy_key) {
-            if !plain.contains_key(&dummy_key) {
-                println!("{}: `{}` example key that is in compressed map but not original map", attempt, dummy_key);
-                break;
-            }
+        if compressed_map.contains_key(&dummy_key) && !plain.contains_key(&dummy_key) {
+            println!("{}: `{}` example key that is in compressed map but not original map", attempt, dummy_key);
+            break;
         }
     }
 }
